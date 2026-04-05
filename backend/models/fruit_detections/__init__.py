@@ -1,0 +1,1 @@
+from .inference import FruitDetector, MIXED_FRUITS_MODEL_PATH

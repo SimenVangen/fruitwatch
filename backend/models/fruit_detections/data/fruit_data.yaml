@@ -1,0 +1,34 @@
+# Fruit Detection Dataset Configuration
+# Replace paths with your actual dataset paths
+
+# Dataset path
+path: /Users/simen/Desktop/Lychees.v2i.yolov8 # UPDATE THIS PATH
+
+# Images and labels directories
+train: images/train
+val: images/val
+test: images/test
+
+# Number of classes
+nc: 6
+
+# Class names
+names:
+  0: ripe_apple
+  1: unripe_apple  
+  2: ripe_orange
+  3: unripe_orange
+  4: ripe_banana
+  5: unripe_banana
+
+# Download/usage instructions
+# 1. Organize your dataset in this structure:
+#   fruit_dataset/
+#   ├── images/train/
+#   ├── images/val/ 
+#   ├── images/test/
+#   ├── labels/train/
+#   ├── labels/val/
+#   └── labels/test/
+#
+# 2. Update the path above to your dataset location

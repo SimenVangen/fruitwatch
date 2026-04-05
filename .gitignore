@@ -1,0 +1,10 @@
+backend/uploads/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.db
+*.sqlite3
+.env
+wandb/
+*.pt
