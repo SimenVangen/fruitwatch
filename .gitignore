@@ -8,4 +8,4 @@ __pycache__/
 .env
 wandb/
 *.pt
-backend/venv/
+backend/venv
