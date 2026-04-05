@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shoufei - AI-Powered Lychee Monitoring</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Password Protection Styles */
+    #password-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .password-container {
+        background: white;
+        padding: 3rem;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+    }
+
+    .password-container h2 {
+        color: #0f766e;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+
+    .password-container p {
+        color: #64748b;
+        margin-bottom: 2rem;
+        line-height: 1.5;
+    }
+
+    .password-input {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .password-input:focus {
+        outline: none;
+        border-color: #0f766e;
+    }
+
+    .password-btn {
+        background: #0f766e;
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: background-color 0.3s ease;
+    }
+
+    .password-btn:hover {
+        background: #115e59;
+    }
+
+    .error-message {
+        color: #dc2626;
+        margin-top: 1rem;
+        display: none;
+    }
+
+    /* Hide website content by default */
+    #website-content {
+        display: none;
+    }
+  </style>
+</head>
+<body>
+    <!-- Password Protection Overlay -->
+    <div id="password-overlay">
+        <div class="password-container">
+            <h2>🔒 Protected Access</h2>
+            <p>This website is password protected. Please enter the password to continue.</p>
+            <input type="password" class="password-input" id="password-input" placeholder="Enter password">
+            <button class="password-btn" onclick="checkPassword()">Access Website</button>
+            <div class="error-message" id="error-message">Incorrect password. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- Your existing website content (hidden until password is correct) -->
+    <div id="website-content">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="logo">
+                    <img src="picture/design-1763364598599-removebg-preview.png" alt="Shoufei Logo" class="logo-img">
+                </div>
+                
+                <!-- Mobile Menu Toggle - MOVED OUTSIDE nav-links -->
+                <div class="mobile-menu-toggle" id="mobileMenuToggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                
+                <!-- Navigation Links -->
+                <div class="nav-links" id="navLinks">
+                    <a href="#hero">Home</a>
+                    <a href="#monitoring">Crop AI</a>
+                    <a href="#future">Future Vision</a>
+                    <a href="#progress">Our Progress</a>
+                    <a href="#about">About Us</a>
+                    <a href="#contact" class="contact-btn">
+                        <i class="fas fa-envelope"></i>
+                        Contact Us
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="hero" class="section">
+          <video class="background-video" autoplay muted loop playsinline>
+              <source src="videos/drone-footage.mp4" type="video/mp4">
+              Your browser does not support the video tag.
+          </video>
+      
+          <div class="hero-content fade-in">
+            <h1 class="hero-title">
+                <span data-i18n="hero.title1">AI-Driven</span> <span class="accent" data-i18n="hero.title2">Agricultural</span>
+            </h1>
+            <p class="hero-subtitle" data-i18n="hero.subtitle">
+                Specialized computer vision for crop monitoring and yield optimization. 
+                Our lychee detection technology is just the beginning of smarter farming.
+            </p>
+              <div class="hero-buttons">
+                <a href="#contact" class="cta-button primary">
+                    <i class="fas fa-envelope"></i>
+                    Get In Touch
+                </a>
+                <a href="#monitoring" class="cta-button secondary">
+                    <i class="fas fa-play-circle"></i>
+                    See Technology
+                </a>
+              </div>
+              <div class="hero-trust">
+                <div class="trust-item">
+                  <i class="fas fa-shield-alt"></i>
+                  <span>Professional Agricultural AI</span>
+                </div>
+                <div class="trust-item">
+                  <i class="fas fa-tractor"></i>
+                  <span>Starting with Lychee Detection</span>
+                </div>
+                <div class="trust-item">
+                  <i class="fas fa-handshake"></i>
+                  <span>Partnership Opportunities</span>
+                </div>
+              </div>
+          </div>
+        </section>
+
+        <div class="features-section">
+            <h2>See How NuroCrop's AI Features Drive Farm Profitability</h2>
+            
+            <!-- Feature Windows Grid -->
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature-window">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-content">
+                        <h3>Advanced Fruit Detection</h3>
+                        <p>95% accuracy in real-time fruit identification</p>
+                        <div class="feature-impact">+3-5% yield recovery</div>
+                    </div>
+                </div>
+        
+                <!-- Feature 2 -->
+                <div class="feature-window">
+                    <div class="feature-icon">🎨</div>
+                    <div class="feature-content">
+                        <h3>Smart Ripeness Analysis</h3>
+                        <p>Color & texture analysis for perfect harvest timing</p>
+                        <div class="feature-impact">+8-12% premium pricing</div>
+                    </div>
+                </div>
+        
+                <!-- Feature 3 -->
+                <div class="feature-window">
+                    <div class="feature-icon">🗺️</div>
+                    <div class="feature-content">
+                        <h3>Smart Orchard Mapping</h3>
+                        <p>GPS mapping & density analysis</p>
+                        <div class="feature-impact">+5-8% labor efficiency</div>
+                    </div>
+                </div>
+        
+                <!-- Feature 4 -->
+                <div class="feature-window">
+                    <div class="feature-icon">📈</div>
+                    <div class="feature-content">
+                        <h3>AI Harvest Prediction</h3>
+                        <p>Weather data & growth pattern analysis</p>
+                        <div class="feature-impact">+4-7% waste reduction</div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Total Impact -->
+            <div class="total-impact">
+                <div class="impact-main">+15-25% Average Profit Increase</div>
+                <div class="impact-sub">Based on actual farm implementations</div>
+            </div>
+        
+            <!-- Calculator Dropdown Button -->
+            <div class="calculator-dropdown">
+                <button class="calculator-toggle" onclick="toggleCalculator()">
+                    💰 Want to calculate what you can save?
+                </button>
+                
+                <div class="calculator-content" id="calculatorContent">
+                    <div class="calculator-header">
+                        <h4>Calculate Your Farm's ROI Based on Our AI Features</h4>
+                    </div>
+                    
+                    <div class="calculator-inputs">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>Your Annual Crop Revenue ($)</label>
+                                <input type="number" id="cropRevenue" placeholder="e.g., 280,000" value="280000">
+                            </div>
+                            <div class="input-group">
+                                <label>Your Current Harvest Loss Estimate (%)</label>
+                                <select id="lossEstimate">
+                                    <option value="10">10% (Very Efficient)</option>
+                                    <option value="15" selected>15% (Industry Average)</option>
+                                    <option value="20">20% (Some Room for Improvement)</option>
+                                    <option value="25">25% (Significant Opportunity)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="calculateSavings()" class="calculate-btn">
+                            Calculate My Feature-Based Savings
+                        </button>
+                    </div>
+        
+                    <!-- Results -->
+                    <div id="calculatorResults" class="calculator-results">
+                        <div class="results-title">Your NuroCrop Impact Breakdown</div>
+                        
+                        <div class="savings-grid">
+                            <div class="savings-item">
+                                <span class="savings-label">Fruit Detection & Recovery:</span>
+                                <span class="savings-amount">+$<span id="detectionSavings">11,200</span></span>
+                            </div>
+                            
+                            <div class="savings-item">
+                                <span class="savings-label">Ripeness Analysis & Premium Pricing:</span>
+                                <span class="savings-amount">+$<span id="ripenessSavings">28,000</span></span>
+                            </div>
+                            
+                            <div class="savings-item">
+                                <span class="savings-label">Orchard Mapping & Labor Efficiency:</span>
+                                <span class="savings-amount">+$<span id="mappingSavings">16,800</span></span>
+                            </div>
+                            
+                            <div class="savings-item">
+                                <span class="savings-label">Harvest Prediction & Waste Reduction:</span>
+                                <span class="savings-amount">+$<span id="predictionSavings">14,700</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="total-breakdown">
+                            <div class="total-line">
+                                <span>Total Additional Profit:</span>
+                                <span class="total-amount">$<span id="totalSavings">70,700</span></span>
+                            </div>
+                            
+                            <div class="cost-line">
+                                <span>NuroCrop Subscription:</span>
+                                <span class="cost-amount">-$4,000/year</span>
+                            </div>
+                            
+                            <div class="net-line">
+                                <span>Your Net Return:</span>
+                                <span class="net-amount">$<span id="netReturn">66,700</span>/year</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Monitoring Section -->
+        <section id="monitoring" class="section content-section">
+            <div class="section-content centered">
+                <div class="section-text fade-in">
+                    <h2 class="section-title">
+                        Precision <span class="accent">Crop Intelligence</span>
+                    </h2>
+                    <p class="section-description">
+                        Explore our AI capabilities through our interactive feature gallery. Navigate through each technology feature.
+                    </p>
+                </div>
+
+                <!-- Simple Feature Grid -->
+                <div class="features-grid fade-in">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-leaf"></i></div>
+                        <h3>Advanced Fruit Detection</h3>
+                        <p>Computer vision trained to identify fruits with over 95% accuracy, starting with lychee and expanding to other crops</p>
+                        <div class="feature-stats">
+                            <span class="stat">95% Accuracy</span>
+                            <span class="stat">Real-time Processing</span>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-palette"></i></div>
+                        <h3>Smart Ripeness Analysis</h3>
+                        <p>Real-time color and texture analysis to determine optimal harvest timing across multiple fruit varieties</p>
+                        <div class="feature-stats">
+                            <span class="stat">Color Analysis</span>
+                            <span class="stat">Texture Sensing</span>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-map-marked-alt"></i></div>
+                        <h3>Smart Orchard Mapping</h3>
+                        <p>Interactive maps showing fruit distribution, density, and ripeness patterns across your entire operation</p>
+                        <div class="feature-stats">
+                            <span class="stat">GPS Mapping</span>
+                            <span class="stat">Density Analysis</span>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                        <h3>AI Harvest Prediction</h3>
+                        <p>Predict optimal harvest windows based on ripeness progression and environmental factors</p>
+                        <div class="feature-stats">
+                            <span class="stat">Weather Data</span>
+                            <span class="stat">Growth Patterns</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Preview Section -->
+                <div class="video-preview-section fade-in">
+                    <div class="preview-header">
+                        <h3>See Our AI in Action</h3>
+                        <p>Watch real-time lychee detection and analysis</p>
+                    </div>
+                    <div class="video-container">
+                        <div class="video-wrapper">
+                            <video class="tech-video" controls poster="images/video-poster.jpg">
+                                <source src="videos/1119.mov" type="video/mp4">
+                                <source src="videos/lychee-ai-demo.webm" type="video/webm">
+                                Your browser does not support the video tag.
+                            </video>
+                            <div class="video-play-overlay">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                        <div class="video-features">
+                            <div class="video-feature">
+                                <i class="fas fa-bullseye"></i>
+                                <span>95% Detection Accuracy</span>
+                            </div>
+                            <div class="video-feature">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Real-time Processing</span>
+                            </div>
+                            <div class="video-feature">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                                <span>Scalable to Other Crops</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Development Status -->
+                <div class="ai-development fade-in">
+                    <div class="development-grid">
+                        <div class="development-card current">
+                            <div class="status-badge">Live Now</div>
+                            <div class="dev-icon"><i class="fas fa-check-circle"></i></div>
+                            <h4>Lychee Detection AI</h4>
+                            <p>Fully operational with 95%+ accuracy in real-world conditions</p>
+                            <div class="tech-stack">
+                                <span>Computer Vision</span>
+                                <span>Real-time Analysis</span>
+                            </div>
+                        </div>
+                        
+                        <div class="development-card in-development">
+                            <div class="status-badge">In Development</div>
+                            <div class="dev-icon"><i class="fas fa-sync-alt"></i></div>
+                            <h4>Multi-Crop Expansion</h4>
+                            <p>Currently training models for mango, citrus, and avocado detection</p>
+                            <div class="tech-stack">
+                                <span>Model Training</span>
+                                <span>Data Collection</span>
+                            </div>
+                        </div>
+                        
+                        <div class="development-card planned">
+                            <div class="status-badge">Coming Soon</div>
+                            <div class="dev-icon"><i class="fas fa-rocket"></i></div>
+                            <h4>Your Crop Next?</h4>
+                            <p>Tell us about your specific needs and jump to the front of our development queue</p>
+                            <div class="tech-stack">
+                                <span>Custom Solutions</span>
+                                <span>Priority Access</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="development-cta">
+                        <h3>Want your crop to be next?</h3>
+                        <p>We're actively expanding our AI models. Partner with us to prioritize your specific agricultural needs.</p>
+                        <a href="#contact" class="cta-button primary">
+                            <i class="fas fa-seedling"></i>
+                            Discuss Your Crops
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Future Vision Section -->
+        <section id="future" class="section content-section alt-bg">
+            <div class="section-content reversed">
+                <div class="media-container fade-in">
+                    <div class="tech-preview">
+                      <div class="tech-item">
+                        <i class="fas fa-robot"></i>
+                        <h4>Mountain Harvesting</h4>
+                        <p>Robotic systems for difficult terrain</p>
+                      </div>
+                      <div class="tech-item">
+                        <i class="fas fa-tint"></i>
+                        <h4>Water Monitoring</h4>
+                        <p>Smart irrigation and moisture sensing</p>
+                      </div>
+                      <div class="tech-item">
+                        <i class="fas fa-microscope"></i>
+                        <h4>Health Monitoring</h4>
+                        <p>Bacteria and disease detection</p>
+                      </div>
+                    </div>
+                </div>
+                <div class="section-text fade-in">
+                    <h2 class="section-title">
+                        The Future of <span class="accent">Smart Orchards</span>
+                    </h2>
+                    <p class="section-description">
+                        We're building toward a future where AI and robotics make fruit cultivation safer, 
+                        more efficient, and accessible—especially in challenging environments.
+                    </p>
+                    
+                    <div class="roadmap">
+                        <div class="roadmap-item current">
+                            <div class="roadmap-marker"></div>
+                            <div class="roadmap-content">
+                                <h3>Specialized Lychee AI</h3>
+                                <p>Precision detection and ripeness analysis for lychee fruits</p>
+                            </div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-marker"></div>
+                            <div class="roadmap-content">
+                                <h3>Multi-Fruit Expansion</h3>
+                                <p>Extending our AI models to other fruits for versatile farm monitoring</p>
+                            </div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-marker"></div>
+                            <div class="roadmap-content">
+                                <h3>Comprehensive Farm Monitoring</h3>
+                                <p>Integrated water sensing, soil analysis, and plant health monitoring systems</p>
+                            </div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-marker"></div>
+                            <div class="roadmap-content">
+                                <h3>Mountain Harvesting Robotics</h3>
+                                <p>AI-driven robots for safe fruit picking in difficult terrain</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="collaboration-cta">
+                      <h3>Want to be part of our journey?</h3>
+                      <p>We're open to partnerships, investments, and talented team members</p>
+                      <a href="#contact" class="cta-button secondary">
+                        <i class="fas fa-handshake"></i>
+                        Explore Opportunities
+                      </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Progress Section -->
+        <section id="progress" class="section content-section">
+            <div class="section-content centered">
+                <div class="section-text fade-in">
+                    <h2 class="section-title">
+                        Our <span class="accent">Technical Journey</span>
+                    </h2>
+                    <p class="section-description">
+                        Building specialized agricultural AI through focused, step-by-step innovation. 
+                        Here's our progress in transforming lychee cultivation.
+                    </p>
+                    
+                    <div class="progress-grid">
+                        <div class="progress-card completed">
+                            <div class="progress-icon"><i class="fas fa-check-circle"></i></div>
+                            <h3>Lychee Detection AI</h3>
+                            <p>Specialized computer vision model trained to identify lychee fruits with high precision</p>
+                        </div>
+                        <div class="progress-card completed">
+                            <div class="progress-icon"><i class="fas fa-check-circle"></i></div>
+                            <h3>Ripeness Analysis</h3>
+                            <p>Advanced algorithms to assess lychee maturity stages from color and texture patterns</p>
+                        </div>
+                        <div class="progress-card completed">
+                            <div class="progress-icon"><i class="fas fa-check-circle"></i></div>
+                            <h3>Professional Dashboard</h3>
+                            <p>Enterprise-grade platform for lychee orchard monitoring and harvest planning</p>
+                        </div>
+                        <div class="progress-card in-progress">
+                            <div class="progress-icon"><i class="fas fa-sync-alt"></i></div>
+                            <h3>Multi-Fruit Model Expansion</h3>
+                            <p>Extending our AI capabilities to recognize additional fruit types</p>
+                        </div>
+                        <div class="progress-card planned">
+                            <div class="progress-icon"><i class="fas fa-clock"></i></div>
+                            <h3>Water Monitoring Systems</h3>
+                            <p>Developing integrated soil moisture and irrigation optimization</p>
+                        </div>
+                        <div class="progress-card planned">
+                            <div class="progress-icon"><i class="fas fa-clock"></i></div>
+                            <h3>Plant Health AI</h3>
+                            <p>Algorithms for early detection of diseases and infections</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Us Section -->
+        <section id="about" class="section content-section alt-bg">
+            <div class="section-content centered">
+                <div class="section-text fade-in">
+                    <h2 class="section-title">
+                        Our <span class="accent">Mission</span>
+                    </h2>
+                    <p class="section-description">
+                        We're revolutionizing fruit cultivation through specialized AI, starting with lychee monitoring 
+                        and expanding toward comprehensive agricultural automation—with a special focus on making 
+                        mountain farming safer and more efficient.
+                    </p>
+                    
+                    <div class="values-grid">
+                        <div class="value-card">
+                            <div class="value-icon"><i class="fas fa-mountain"></i></div>
+                            <h3>Safer Mountain Harvesting</h3>
+                            <p>Developing robotic solutions for dangerous terrain where manual fruit picking poses risks to workers</p>
+                        </div>
+                        <div class="value-card">
+                            <div class="value-icon"><i class="fas fa-seedling"></i></div>
+                            <h3>Precision Agriculture</h3>
+                            <p>Creating AI tools that help farmers make data-driven decisions for better yields and resource management</p>
+                        </div>
+                        <div class="value-card">
+                            <div class="value-icon"><i class="fas fa-expand-arrows-alt"></i></div>
+                            <h3>Technology Accessibility</h3>
+                            <p>Making advanced agricultural AI accessible to farms of all sizes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section content-section">
+            <div class="section-content centered">
+                <div class="section-text fade-in">
+                    <h2 class="section-title">
+                        Let's <span class="accent">Connect</span>
+                    </h2>
+                    <p class="section-description">
+                        Interested in our technology, partnership opportunities, or joining our team? 
+                        Reach out directly to start a conversation.
+                    </p>
+                    
+                    <div class="contact-methods">
+                        <div class="contact-method">
+                            <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                            <h3>Email</h3>
+                            <a href="mailto:simenv@hotmail.no" class="contact-email">simenv@hotmail.no</a>
+                            <p>Primary contact method</p>
+                        </div>
+                        
+                        <div class="contact-method">
+                            <div class="contact-icon"><i class="fab fa-weixin"></i></div>
+                            <h3>WeChat</h3>
+                            <p>Available for direct messaging</p>
+                            <p class="contact-detail">Username: simenv</p>
+                        </div>
+                    </div>
+
+                    <div class="opportunity-types">
+                        <h3>We're Interested In:</h3>
+                        <div class="opportunity-grid">
+                            <div class="opportunity-item">
+                                <i class="fas fa-handshake"></i>
+                                <h4>Partnerships</h4>
+                                <p>Farm owners, agricultural businesses, technology partners</p>
+                            </div>
+                            <div class="opportunity-item">
+                                <i class="fas fa-users"></i>
+                                <h4>Team Members</h4>
+                                <p>Talented individuals passionate about agri-tech</p>
+                            </div>
+                            <div class="opportunity-item">
+                                <i class="fas fa-chart-line"></i>
+                                <h4>Investments</h4>
+                                <p>Strategic investors in agricultural technology</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+    
+    <!-- Password Protection Script -->
+    <script>
+        // Password protection script
+        const CORRECT_PASSWORD = "NuroCrop2024"; // CHANGE THIS TO YOUR DESIRED PASSWORD
+        
+        function checkPassword() {
+            const input = document.getElementById('password-input').value;
+            const errorMessage = document.getElementById('error-message');
+            const websiteContent = document.getElementById('website-content');
+            const passwordOverlay = document.getElementById('password-overlay');
+            
+            if (input === CORRECT_PASSWORD) {
+                // Correct password - show website
+                passwordOverlay.style.display = 'none';
+                websiteContent.style.display = 'block';
+                
+                // Store in session storage so password isn't needed on refresh
+                sessionStorage.setItem('authenticated', 'true');
+            } else {
+                // Incorrect password - show error
+                errorMessage.style.display = 'block';
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').focus();
+            }
+        }
+
+        // Check if already authenticated
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('authenticated') === 'true') {
+                document.getElementById('password-overlay').style.display = 'none';
+                document.getElementById('website-content').style.display = 'block';
+            } else {
+                // Focus on password input
+                document.getElementById('password-input').focus();
+                
+                // Allow Enter key to submit
+                document.getElementById('password-input').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        checkPassword();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
