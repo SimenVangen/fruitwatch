@@ -137,6 +137,25 @@ ALGORITHM=HS256
 | GET | `/farms` | List farms for authenticated user |
 
 ---
+## Edge Inference (Raspberry Pi 5)
+
+The platform supports standalone edge inference on a Raspberry Pi 5 with Camera Module 3.
+No backend connection needed — the model runs directly on the device.
+
+**Setup:**
+```bash
+python3 -m venv ~/fruitwatch-env --system-site-packages
+source ~/fruitwatch-env/bin/activate
+pip install ultralytics opencv-python-headless picamera2 --extra-index-url https://download.pytorch.org/whl/cpu
+```
+
+**Run live detection:**
+```bash
+python drone/inference_edge.py
+```
+
+Controls: `L` = lychee model · `M` = multi-fruit model · `Q` = quit
+---
 
 ## Honest Limitations
 
