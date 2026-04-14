@@ -7,21 +7,19 @@ sys.path.append(ROOT_DIR)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles
 
 from app.routes import (
-    detections, 
-    farm_route, 
-    forecast, 
+    detections,
+    farm_route,
+    forecast,
     sensors,
-    mission_route, 
-    health_route, 
-    moisture_route, 
+    mission_route,
+    health_route,
+    moisture_route,
     telemetry_route,
     summary_route
 )
-
-
 
 from app.auth import router
 from app.db.db import init_db
@@ -32,25 +30,30 @@ app = FastAPI(title="Fruit Monitoring API")
 
 logger = logging.getLogger(__name__)
 
-# CORS
+# ── Static files (uploaded + annotated images) ────────────────
+UPLOAD_DIR = "/Users/simen/Desktop/fruit_monitoring/backend/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+# ── CORS ──────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # change later for production
+    allow_origins=["*"],  # change to specific origin in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Routers
+# ── Routers ───────────────────────────────────────────────────
 app.include_router(router)
-app.include_router(detections.router, prefix="/detections")
-app.include_router(sensors.router, prefix="/sensors")
-app.include_router(forecast.router, prefix="/forecast")
+app.include_router(detections.router,    prefix="/detections")
+app.include_router(sensors.router,       prefix="/sensors")
+app.include_router(forecast.router,      prefix="/forecast")
 app.include_router(mission_route.router, prefix="/missions")
-app.include_router(health_route.router, prefix="/health-metrics")
-app.include_router(moisture_route.router, prefix="/moisture")
-app.include_router(telemetry_route.router, prefix="/telemetry")
-app.include_router(farm_route.router, prefix="/farms")
+app.include_router(health_route.router,  prefix="/health-metrics")
+app.include_router(moisture_route.router,prefix="/moisture")
+app.include_router(telemetry_route.router,prefix="/telemetry")
+app.include_router(farm_route.router,    prefix="/farms")
 app.include_router(summary_route.router, prefix="/summary")
 
 @app.get("/")

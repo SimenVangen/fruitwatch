@@ -1,12 +1,7 @@
 import React from "react";
 import {
-  WelcomeBanner,
-  BannerTitle,
-  BannerSubtitle,
-  StatsRow,
-  Card,
-  CardTitle,
-  CardValue,
+  WelcomeBanner, BannerTitle, BannerSubtitle,
+  StatsRow, Card, CardTitle, CardValue,
 } from "../shared/styledcomponents";
 import { useTranslation } from "../../hooks/useTranslation";
 
@@ -15,48 +10,96 @@ const fruitEmojis = {
   Pineapple: "🍍", Watermelon: "🍉", Lychee: "🍈", Unknown: "❓",
 };
 
-function getFruitEmoji(fruit) {
-  return fruitEmojis[fruit] || "🍎";
-}
+const MODEL_CONFIG = {
+  lychee: {
+    badge: "🍈 Lychee Model",
+    badgeColor: "#EC4899",
+    subtitle: "Lychee Statistics",
+  },
+  "360_fruits": {
+    badge: "🍎 360 Fruits Model",
+    badgeColor: "#3B82F6",
+    subtitle: "360 Fruits Statistics",
+  },
+  plant_disease: {
+    badge: "🌿 Plant Disease Model",
+    badgeColor: "#F59E0B",
+    subtitle: "Plant Health Statistics",
+  },
+};
 
 export default function StatsBanner({ user, detections = [], currentModel = "lychee" }) {
   const { t } = useTranslation();
+  const config = MODEL_CONFIG[currentModel] || MODEL_CONFIG.lychee;
 
   const getStats = () => {
-    if (currentModel === "lychee") {
-      const totalFruits = detections.reduce((sum, d) => sum + (d.total_detected || 0), 0);
-      const ripeCount = detections.reduce((sum, d) => sum + (d.ripe || 0), 0);
-      const unripeCount = detections.reduce((sum, d) => sum + (d.unripe || 0), 0);
-      return { total: totalFruits, ripeCount, unripeCount, fruitCounts: {}, fruitTypes: 1, topFruit: "Lychee" };
+    if (currentModel === "plant_disease") {
+      const total = detections.length;
+      const healthy = detections.filter(d => d.is_healthy === "True" || d.is_healthy === true).length;
+      const diseased = detections.filter(d => d.is_healthy === "False" || d.is_healthy === false).length;
+      const healthPct = total > 0 ? Math.round((healthy / total) * 100) : 0;
+      const diseaseCounts = {};
+      detections.forEach(d => {
+        if (d.disease_type) diseaseCounts[d.disease_type] = (diseaseCounts[d.disease_type] || 0) + 1;
+      });
+      const topDisease = Object.keys(diseaseCounts).length > 0
+        ? Object.keys(diseaseCounts).reduce((a, b) => diseaseCounts[a] > diseaseCounts[b] ? a : b)
+        : "None";
+      return { total, healthy, diseased, healthPct, topDisease };
     }
 
-    let totalFruits = 0;
-    const fruitCounts = {};
+    if (currentModel === "lychee") {
+      const total = detections.reduce((s, d) => s + (d.total_detected || 0), 0);
+      const ripe = detections.reduce((s, d) => s + (d.ripe || 0), 0);
+      const unripe = detections.reduce((s, d) => s + (d.unripe || 0), 0);
+      return { total, ripe, unripe };
+    }
 
+    // 360 fruits
+    let total = 0;
+    const fruitCounts = {};
     detections.forEach(d => {
       if (d.fruit_counts) {
         try {
           const counts = typeof d.fruit_counts === "string" ? JSON.parse(d.fruit_counts) : d.fruit_counts;
           Object.entries(counts).forEach(([fruit, count]) => {
             fruitCounts[fruit] = (fruitCounts[fruit] || 0) + count;
-            totalFruits += count;
+            total += count;
           });
         } catch {}
       } else if (d.total_detected) {
-        totalFruits += d.total_detected;
+        total += d.total_detected;
       }
     });
-
     const fruitTypes = Object.keys(fruitCounts).length;
     const topFruit = fruitTypes > 0
       ? Object.keys(fruitCounts).reduce((a, b) => fruitCounts[a] > fruitCounts[b] ? a : b)
       : "None";
-
-    return { total: totalFruits, ripeCount: 0, unripeCount: 0, fruitCounts, fruitTypes, topFruit };
+    return { total, fruitCounts, fruitTypes, topFruit };
   };
 
   const stats = getStats();
-  const isLychee = currentModel === "lychee";
+
+  const cards = currentModel === "plant_disease"
+    ? [
+        { icon: "🔍", label: "Scans", value: stats.total, border: "#6366F1" },
+        { icon: "✅", label: "Healthy", value: stats.healthy, border: "#10B981" },
+        { icon: "⚠️", label: "Diseased", value: stats.diseased, border: "#EF4444" },
+        { icon: "📊", label: "Health Rate", value: `${stats.healthPct}%`, border: "#F59E0B" },
+      ]
+    : currentModel === "lychee"
+    ? [
+        { icon: "🔍", label: t("stats.totalDetections"), value: stats.total, border: "#EF4444" },
+        { icon: "🍎", label: t("stats.ripeFruit"), value: stats.ripe, border: "#10B981" },
+        { icon: "🍏", label: t("stats.unripeFruit"), value: stats.unripe, border: "#F59E0B" },
+        { icon: "📅", label: t("stats.readyNextWeek"), value: stats.ripe, border: "#064E3B" },
+      ]
+    : [
+        { icon: "🍎", label: t("stats.totalFruits"), value: stats.total, border: "#EF4444" },
+        { icon: "📊", label: t("stats.fruitTypes"), value: stats.fruitTypes, border: "#10B981" },
+        { icon: "🏆", label: t("stats.topFruit"), value: stats.topFruit, border: "#F59E0B" },
+        { icon: "🔍", label: t("stats.totalDetections"), value: detections.length, border: "#064E3B" },
+      ];
 
   return (
     <WelcomeBanner>
@@ -64,52 +107,29 @@ export default function StatsBanner({ user, detections = [], currentModel = "lyc
         <div>
           <BannerTitle>{t("stats.welcome").replace("{user}", user)}</BannerTitle>
           <BannerSubtitle>
-            {t("stats.subtitle")} • <strong>{isLychee ? t("stats.lycheeStats") : t("stats.fruits360Stats")}</strong>
+            {t("stats.subtitle")} • <strong>{config.subtitle}</strong>
           </BannerSubtitle>
         </div>
         <div style={{
-          background: isLychee ? "#10B981" : "#3B82F6",
-          color: "white",
-          padding: "0.5rem 1rem",
-          borderRadius: "20px",
-          fontSize: "0.875rem",
-          fontWeight: "600",
+          background: config.badgeColor, color: "white",
+          padding: "0.5rem 1rem", borderRadius: "20px",
+          fontSize: "0.875rem", fontWeight: "600",
         }}>
-          {isLychee ? "🍈 Lychee Model" : "🍎 360 Fruits Model"}
+          {config.badge}
         </div>
       </div>
 
       <StatsRow>
-        <Card style={{ borderLeft: "4px solid #EF4444" }}>
-          <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>{isLychee ? "🔍" : "🍎"}</div>
-          <CardTitle>{isLychee ? t("stats.totalDetections") : t("stats.totalFruits")}</CardTitle>
-          <CardValue style={{ color: "#6B7280" }}>{stats.total}</CardValue>
-        </Card>
-
-        <Card style={{ borderLeft: "4px solid #10B981" }}>
-          <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>{isLychee ? "🍎" : "📊"}</div>
-          <CardTitle>{isLychee ? t("stats.ripeFruit") : t("stats.fruitTypes")}</CardTitle>
-          <CardValue style={{ color: "#6B7280" }}>{isLychee ? stats.ripeCount : stats.fruitTypes}</CardValue>
-        </Card>
-
-        <Card style={{ borderLeft: "4px solid #F59E0B" }}>
-          <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>{isLychee ? "🍏" : "🏆"}</div>
-          <CardTitle>{isLychee ? t("stats.unripeFruit") : t("stats.topFruit")}</CardTitle>
-          <CardValue style={{ color: "#6B7280", fontSize: stats.topFruit?.length > 10 ? "0.9rem" : "1.25rem" }}>
-            {isLychee ? stats.unripeCount : stats.topFruit}
-          </CardValue>
-        </Card>
-
-        <Card style={{ borderLeft: "4px solid #064E3B" }}>
-          <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>📅</div>
-          <CardTitle>{t("stats.readyNextWeek")}</CardTitle>
-          <CardValue style={{ color: "#6B7280" }}>
-            {isLychee ? stats.ripeCount : t("common.noData")}
-          </CardValue>
-        </Card>
+        {cards.map(({ icon, label, value, border }) => (
+          <Card key={label} style={{ borderLeft: `4px solid ${border}` }}>
+            <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>{icon}</div>
+            <CardTitle>{label}</CardTitle>
+            <CardValue style={{ color: "#6B7280" }}>{value}</CardValue>
+          </Card>
+        ))}
       </StatsRow>
 
-      {!isLychee && stats.fruitTypes > 0 && (
+      {currentModel === "360_fruits" && stats.fruitTypes > 0 && (
         <div style={{
           marginTop: "1rem", padding: "1rem",
           background: "#F8FAFC", borderRadius: "8px", border: "1px solid #E2E8F0"
@@ -122,7 +142,7 @@ export default function StatsBanner({ user, detections = [], currentModel = "lyc
                 background: "white", padding: "0.5rem 1rem",
                 borderRadius: "20px", border: "1px solid #E2E8F0"
               }}>
-                <span style={{ fontSize: "1.2rem" }}>{getFruitEmoji(fruit)}</span>
+                <span style={{ fontSize: "1.2rem" }}>{fruitEmojis[fruit] || "🍎"}</span>
                 <span style={{ fontWeight: "600", color: "#475569" }}>{fruit}</span>
                 <span style={{
                   background: "#3B82F6", color: "white", borderRadius: "50%",

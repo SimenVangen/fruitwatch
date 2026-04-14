@@ -1,3 +1,4 @@
+# Current
 backend/uploads/
 __pycache__/
 *.pyc
@@ -8,4 +9,32 @@ __pycache__/
 .env
 wandb/
 *.pt
-backend/venv
+backend/venv/
+
+# Add these
+node_modules/
+frontend/fruit-dashboard/node_modules/
+frontend/fruit-dashboard/build/
+frontend/fruit-dashboard/.env
+frontend/fruit-dashboard/.env.local
+
+# Python
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Training outputs — already have *.pt but add the folders too
+**/train_n/
+**/train_s/
+**/runs/
+
+# MacOS
+.DS_Store
+**/.DS_Store
+
+# Jupyter if you ever use it
+.ipynb_checkpoints/
+
+# Logs
+*.log

@@ -3,28 +3,30 @@ import { MapContainer, TileLayer, Marker, Circle, Tooltip, useMap } from "react-
 import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { Card } from "../shared/styledcomponents";
-import FarmSelector from "./farmselector";
-import { useTranslation } from "../../hooks/useTranslation";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconUrl:       "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const createCustomIcon = (color) => new L.DivIcon({
-  html: `<div style="background-color:${color};width:20px;height:20px;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
+const createIcon = (color) => new L.DivIcon({
+  html: `<div style="background:${color};width:18px;height:18px;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.25);"></div>`,
   className: "custom-marker",
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
 });
 
-const getStatusColor = (ripe, unripe) => {
-  const total = ripe + unripe;
+const getMarkerColor = (d, isDiseaseFarm) => {
+  if (isDiseaseFarm) {
+    if (d.is_healthy === "True"  || d.is_healthy === true)  return "#10B981";
+    if (d.is_healthy === "False" || d.is_healthy === false) return "#EF4444";
+    return "#6B7280";
+  }
+  const total = (d.ripe || 0) + (d.unripe || 0);
   if (total === 0) return "#6B7280";
-  const pct = (ripe / total) * 100;
+  const pct = (d.ripe / total) * 100;
   if (pct >= 70) return "#10B981";
   if (pct >= 40) return "#F59E0B";
   return "#EF4444";
@@ -36,55 +38,70 @@ function RecenterMap({ center }) {
   return null;
 }
 
-export default function DashboardFarmMap({ selectedFarm, farms, setSelectedFarm, detections: liveDetections }) {
+export default function DashboardFarmMap({ selectedFarm, farms, setSelectedFarm, detections: raw, farmType }) {
   const [mapReady, setMapReady] = useState(false);
-  const { t } = useTranslation();
-  const detections = liveDetections || [];
+  const detections    = raw || [];
+  const isDiseaseFarm = farmType === "plant_disease_only";
 
   const center = useMemo(() => {
-    const valid = detections.find(d => d.latitude && d.longitude);
-    return valid ? [Number(valid.latitude), Number(valid.longitude)] : [24.0, 25.0];
+    const v = detections.find(d => d.latitude && d.longitude);
+    return v ? [Number(v.latitude), Number(v.longitude)] : [24.0, 25.0];
   }, [detections]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMapReady(true), 100);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setMapReady(true), 100);
+    return () => clearTimeout(t);
   }, []);
 
-  const totalRipe = detections.reduce((sum, d) => sum + (d.ripe || 0), 0);
-  const totalUnripe = detections.reduce((sum, d) => sum + (d.unripe || 0), 0);
+  const legend = isDiseaseFarm
+    ? [
+        { color: "#10B981", label: "Healthy plant" },
+        { color: "#EF4444", label: "Diseased plant" },
+        { color: "#6B7280", label: "Unknown" },
+      ]
+    : [
+        { color: "#10B981", label: "≥70% ripe" },
+        { color: "#F59E0B", label: "40–70% ripe" },
+        { color: "#EF4444", label: "<40% ripe" },
+      ];
+
+  const totalRipe     = detections.reduce((s,d) => s + (d.ripe   || 0), 0);
+  const totalUnripe   = detections.reduce((s,d) => s + (d.unripe || 0), 0);
+  const healthyCount  = detections.filter(d => d.is_healthy === "True"  || d.is_healthy === true).length;
+  const diseasedCount = detections.filter(d => d.is_healthy === "False" || d.is_healthy === false).length;
+
+  const statsBar = isDiseaseFarm
+    ? [
+        { label: "Scans",    value: detections.length, color: "#6366F1" },
+        { label: "Healthy",  value: healthyCount,      color: "#10B981" },
+        { label: "Diseased", value: diseasedCount,     color: "#EF4444" },
+      ]
+    : [
+        { label: "Scans",  value: detections.length, color: "#6366F1" },
+        { label: "Ripe",   value: totalRipe,          color: "#10B981" },
+        { label: "Unripe", value: totalUnripe,        color: "#F59E0B" },
+      ];
 
   return (
-    <Card>
-      <div style={{ marginBottom: "8px" }}>
-        <FarmSelector farms={farms} selectedFarm={selectedFarm} setSelectedFarm={setSelectedFarm} />
-      </div>
-
+    <div>
       {/* Legend */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "0.5rem", fontSize: "0.8rem", flexWrap: "wrap" }}>
-        {[
-          { color: "#10B981", label: "≥70% ripe" },
-          { color: "#F59E0B", label: "40–70% ripe" },
-          { color: "#EF4444", label: "<40% ripe" },
-        ].map(({ color, label }) => (
-          <span key={label} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <span style={{ width: 12, height: 12, borderRadius: "50%", background: color, display: "inline-block" }} />
+      <div style={{ display:"flex", gap:"0.75rem", marginBottom:"0.5rem", flexWrap:"wrap" }}>
+        {legend.map(({ color, label }) => (
+          <span key={label} style={{ display:"flex", alignItems:"center", gap:"4px", fontSize:"0.78rem", color:"#6B7280" }}>
+            <span style={{ width:10, height:10, borderRadius:"50%", background:color, display:"inline-block", flexShrink:0 }}/>
             {label}
           </span>
         ))}
       </div>
 
-      <div style={{ background: "#F0F9FF", padding: "0.5rem", borderRadius: "6px", marginBottom: "0.5rem", fontSize: "0.8rem", color: "#1E40AF" }}>
-        {t("map.mapControls")}
-      </div>
-
-      <div style={{ height: "380px", width: "100%", borderRadius: "12px", overflow: "hidden" }}>
-        <MapContainer center={center} zoom={14} style={{ height: "100%", width: "100%" }} whenReady={() => setMapReady(true)}>
+      {/* Map */}
+      <div style={{ height:"400px", width:"100%", borderRadius:"10px", overflow:"hidden" }}>
+        <MapContainer center={center} zoom={14} style={{ height:"100%", width:"100%" }} whenReady={() => setMapReady(true)}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
-          <RecenterMap center={center} />
+          <RecenterMap center={center}/>
 
           {mapReady && detections.length > 0 && (
             <MarkerClusterGroup
@@ -94,28 +111,40 @@ export default function DashboardFarmMap({ selectedFarm, farms, setSelectedFarm,
               showCoverageOnHover
               zoomToBoundsOnClick
               iconCreateFunction={cluster => new L.DivIcon({
-                html: `<div style="background:#10B981;color:white;width:40px;height:40px;border:3px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;">${cluster.getChildCount()}</div>`,
+                html: `<div style="background:#10B981;color:white;width:36px;height:36px;border:2.5px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.8rem;">${cluster.getChildCount()}</div>`,
                 className: "cluster-marker",
-                iconSize: [40, 40],
+                iconSize: [36, 36],
               })}
             >
-              {detections.filter(d => d.latitude && d.longitude).map((d, i) => {
-                const color = getStatusColor(d.ripe || 0, d.unripe || 0);
-                return (
-                  <Marker key={i} position={[Number(d.latitude), Number(d.longitude)]} icon={createCustomIcon(color)}>
-                    <Tooltip>
-                      <div style={{ minWidth: "160px", fontSize: "0.85rem" }}>
-                        <strong>Detection #{i + 1}</strong><br />
-                        🍎 Ripe: <strong>{d.ripe || 0}</strong><br />
-                        🍏 Unripe: <strong>{d.unripe || 0}</strong><br />
-                        📊 Total: <strong>{d.total_detected || 0}</strong><br />
-                        📍 {Number(d.latitude).toFixed(4)}, {Number(d.longitude).toFixed(4)}<br />
-                        {d.timestamp && <>⏰ {new Date(d.timestamp).toLocaleString()}</>}
-                      </div>
-                    </Tooltip>
-                  </Marker>
-                );
-              })}
+              {detections.filter(d => d.latitude && d.longitude).map((d, i) => (
+                <Marker
+                  key={i}
+                  position={[Number(d.latitude), Number(d.longitude)]}
+                  icon={createIcon(getMarkerColor(d, isDiseaseFarm))}
+                >
+                  <Tooltip>
+                    <div style={{ fontSize:"0.82rem", lineHeight:"1.5" }}>
+                      <strong>Detection #{i + 1}</strong><br/>
+                      {isDiseaseFarm ? (
+                        <>
+                          🌿 {d.plant_type || "Plant"}<br/>
+                          {d.is_healthy === "True" || d.is_healthy === true
+                            ? "✅ Healthy"
+                            : `⚠️ ${(d.disease_type || "Unknown").replace(/_/g, " ")}`}
+                        </>
+                      ) : (
+                        <>
+                          🍈 Ripe: <strong>{d.ripe || 0}</strong><br/>
+                          🍏 Unripe: <strong>{d.unripe || 0}</strong>
+                        </>
+                      )}
+                      <br/>
+                      📍 {Number(d.latitude).toFixed(4)}, {Number(d.longitude).toFixed(4)}<br/>
+                      {d.timestamp && <>⏰ {new Date(d.timestamp).toLocaleString()}</>}
+                    </div>
+                  </Tooltip>
+                </Marker>
+              ))}
             </MarkerClusterGroup>
           )}
 
@@ -124,35 +153,34 @@ export default function DashboardFarmMap({ selectedFarm, farms, setSelectedFarm,
               key={`c-${i}`}
               center={[Number(d.latitude), Number(d.longitude)]}
               radius={50}
-              color={getStatusColor(d.ripe || 0, d.unripe || 0)}
-              fillColor={getStatusColor(d.ripe || 0, d.unripe || 0)}
-              fillOpacity={0.15}
-              weight={2}
+              color={getMarkerColor(d, isDiseaseFarm)}
+              fillColor={getMarkerColor(d, isDiseaseFarm)}
+              fillOpacity={0.12}
+              weight={1.5}
             />
           ))}
         </MapContainer>
       </div>
 
-      {/* Stats bar */}
-      {detections.length > 0 ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.5rem", marginTop: "0.75rem" }}>
-          {[
-            { label: "Detections", value: detections.length, color: "#6366F1" },
-            { label: "Total Fruits", value: totalRipe + totalUnripe, color: "#3B82F6" },
-            { label: "Ripe", value: totalRipe, color: "#10B981" },
-            { label: "Unripe", value: totalUnripe, color: "#F59E0B" },
-          ].map(({ label, value, color }) => (
-            <div key={label} style={{ background: "#F8FAFC", borderRadius: "8px", padding: "0.5rem", textAlign: "center", borderLeft: `3px solid ${color}` }}>
-              <div style={{ fontSize: "1.1rem", fontWeight: "bold", color }}>{value}</div>
-              <div style={{ fontSize: "0.7rem", color: "#6B7280" }}>{label}</div>
+      {/* Bottom stat strip */}
+      {detections.length === 0 ? (
+        <p style={{ textAlign:"center", color:"#9CA3AF", fontSize:"0.85rem", margin:"0.75rem 0 0" }}>
+          No detections yet — data will appear here once your drone sends images.
+        </p>
+      ) : (
+        <div style={{ display:"flex", gap:"0.5rem", marginTop:"0.75rem" }}>
+          {statsBar.map(({ label, value, color }) => (
+            <div key={label} style={{
+              flex:1, background:"#F8FAFC", borderRadius:"8px",
+              padding:"0.4rem 0.5rem", textAlign:"center",
+              borderLeft:`3px solid ${color}`
+            }}>
+              <div style={{ fontSize:"1rem", fontWeight:"700", color }}>{value}</div>
+              <div style={{ fontSize:"0.68rem", color:"#9CA3AF" }}>{label}</div>
             </div>
           ))}
         </div>
-      ) : (
-        <div style={{ textAlign: "center", color: "#6B7280", padding: "0.75rem", fontSize: "0.9rem" }}>
-          No detection data yet. Upload drone images to see results on the map.
-        </div>
       )}
-    </Card>
+    </div>
   );
 }

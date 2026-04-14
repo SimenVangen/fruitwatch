@@ -40,9 +40,9 @@ const ModelButtons = styled.div`
 
 const ModelButton = styled.button`
   padding: 0.75rem 1.5rem;
-  border: 2px solid ${props => props.active ? "#10B981" : "#e5e7eb"};
+  border: 2px solid ${props => props.active ? props.activecolor || "#10B981" : "#e5e7eb"};
   border-radius: 8px;
-  background: ${props => props.active ? "#10B981" : "white"};
+  background: ${props => props.active ? props.activecolor || "#10B981" : "white"};
   color: ${props => props.active ? "white" : "#374151"};
   cursor: pointer;
   font-size: 0.875rem;
@@ -55,10 +55,29 @@ const ModelButton = styled.button`
   min-width: 140px;
   justify-content: center;
   &:hover {
-    border-color: #10B981;
-    background: ${props => props.active ? "#10B981" : "#f0fdf4"};
+    border-color: ${props => props.activecolor || "#10B981"};
+    background: ${props => props.active ? props.activecolor || "#10B981" : props.hoverbg || "#f0fdf4"};
   }
 `;
+
+const MODELS = [
+  {
+    key:      "lychee",
+    icon:     "🍈",
+    label:    "Lychee Model",
+    color:    "#EC4899",
+    hoverBg:  "#fdf2f8",
+    info:     "Lychee detection",
+  },
+  {
+    key:      "plant_disease_only",
+    icon:     "🌿",
+    label:    "Plant Disease",
+    color:    "#F59E0B",
+    hoverBg:  "#fffbeb",
+    info:     "Disease detection only",
+  },
+];
 
 export default function ModelSwitcher({ currentModel, onModelChange, detections = [] }) {
   const { t } = useTranslation();
@@ -67,29 +86,31 @@ export default function ModelSwitcher({ currentModel, onModelChange, detections 
     const type = d.model_type || "lychee";
     acc[type] = (acc[type] || 0) + 1;
     return acc;
-  }, { lychee: 0, "360_fruits": 0 });
+  }, { lychee: 0, plant_disease_only: 0 });
+
+  const currentInfo = MODELS.find(m => m.key === currentModel)?.info || "";
 
   return (
     <SwitcherContainer>
       <SwitcherHeader>
         <SwitcherLabel>{t("model.detectionModel")}</SwitcherLabel>
-        <ModelInfo>
-          {currentModel === "lychee" ? t("model.lycheeSpecialized") : t("model.multifruitSpecialized")}
-        </ModelInfo>
+        <ModelInfo>{currentInfo}</ModelInfo>
       </SwitcherHeader>
       <ModelButtons>
-        <ModelButton active={currentModel === "lychee"} onClick={() => onModelChange("lychee")}>
-           {t("model.lycheeModel")}
-          <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>
-            {modelStats.lychee} {t("common.detections")}
-          </span>
-        </ModelButton>
-        <ModelButton active={currentModel === "360_fruits"} onClick={() => onModelChange("360_fruits")}>
-           {t("model.fruits360Model")}
-          <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>
-            {modelStats["360_fruits"]} {t("common.detections")}
-          </span>
-        </ModelButton>
+        {MODELS.map(({ key, icon, label, color, hoverBg }) => (
+          <ModelButton
+            key={key}
+            active={currentModel === key}
+            activecolor={color}
+            hoverbg={hoverBg}
+            onClick={() => onModelChange(key)}
+          >
+            {icon} {label}
+            <span style={{ fontSize: "0.7rem", opacity: 0.8 }}>
+              {modelStats[key] || 0} {t("common.detections")}
+            </span>
+          </ModelButton>
+        ))}
       </ModelButtons>
     </SwitcherContainer>
   );
