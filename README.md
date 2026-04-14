@@ -1,6 +1,6 @@
 # 🌾 FruitWatch — AI-Powered Fruit Monitoring Platform
 
-> Drone-based fruit detection, ripeness analysis, and harvest prediction. Built with YOLOv8, FastAPI, and React.
+> Drone-based fruit detection, ripeness analysis, plant disease detection, and harvest prediction. Built with YOLOv8, FastAPI, and React.
 
 ---
 
@@ -14,7 +14,7 @@ Then reality hit. I didn't have the hardware. I didn't have the manufacturing ca
 
 So I scaled down — but not in ambition.
 
-Instead of a hand that picks fruit, I built a **brain that monitors it**. A full-stack AI platform that lets a drone fly over an orchard, detect and classify fruits, map their GPS coordinates, predict harvest readiness, and display everything in a real-time dashboard.
+Instead of a hand that picks fruit, I built a **brain that monitors it**. A full-stack AI platform that lets a drone fly over an orchard, detect and classify fruits, detect plant diseases, map GPS coordinates, predict harvest readiness, and display everything in a real-time dashboard.
 
 It's not a robotic arm. But it's a complete, working system — and honestly, the monitoring problem is arguably more valuable to solve first anyway.
 
@@ -22,12 +22,13 @@ It's not a robotic arm. But it's a complete, working system — and honestly, th
 
 ## What It Does
 
-A drone uploads images to the platform. The backend runs YOLOv8 inference, classifies each fruit as ripe or unripe, attaches GPS coordinates, stores everything in a database, and feeds a harvest prediction engine. The frontend displays all of this on an interactive map with charts, weather forecasts, and harvest timelines.
+An image from a drone or Raspberry Pi camera is uploaded to the platform. The backend automatically runs the right models based on farm type, classifies each fruit as ripe or unripe, detects plant diseases, attaches GPS coordinates, stores everything in a database, and feeds a harvest prediction engine. The frontend displays all of this on an interactive map with charts, weather forecasts, scan galleries, and harvest timelines.
 
 **The full pipeline:**
 
 ```
-Drone Image → YOLOv8 Detection → GPS Positioning → SQLite DB → Harvest Prediction → React Dashboard
+Image → Farm Type Lookup → YOLOv8 Fruit Detection + Plant Disease Classifier
+     → GPS Positioning → SQLite DB → Harvest Prediction → React Dashboard
 ```
 
 ---
@@ -36,23 +37,38 @@ Drone Image → YOLOv8 Detection → GPS Positioning → SQLite DB → Harvest P
 
 | Layer | Technology |
 |---|---|
-| Detection | YOLOv8 (Ultralytics) — two custom-trained models |
+| Fruit Detection | YOLOv8 (Ultralytics) — custom-trained lychee model |
+| Disease Detection | YOLOv8 classification — PlantVillage dataset, 29 classes |
 | Backend | FastAPI, SQLAlchemy, SQLite |
 | Auth | JWT tokens |
 | Weather | OpenWeatherMap API |
 | Frontend | React, styled-components, Leaflet maps, Recharts |
+| Edge | Raspberry Pi 5 + Camera Module 3 |
 | Language | Bilingual EN/ZH support |
 
 ---
 
 ## Models
 
-Two YOLOv8 models trained from scratch:
+Two AI models running on every image upload:
 
-- **Lychee model** — specialized for lychee detection and ripeness classification (ripe/unripe based on color)
-- **360 multi-fruit model** — detects apple, banana, grape, orange, pineapple, watermelon
+- **Lychee model** — specialized for lychee detection and ripeness classification (ripe/unripe based on HSV color analysis). Draws bounding boxes on annotated images saved per detection.
+- **Plant disease classifier** — trained on the PlantVillage dataset. Detects 29 disease classes across 9 crops: Tomato, Potato, Pepper, Apple, Grape, Corn, Peach, Strawberry, Cherry. Confidence threshold of 60% — anything below is silently ignored to prevent false positives.
 
-The model switcher in the upload API lets you choose which model processes each image.
+Which models run is determined automatically by the farm's `farm_type` — no manual selection needed.
+
+---
+
+## Farm Type System
+
+Each farm has a `farm_type` set once at creation that controls which models run:
+
+| Farm Type | Fruit Detection | Disease Detection |
+|---|---|---|
+| `lychee` | ✅ Lychee YOLOv8 | ✅ PlantVillage classifier |
+| `plant_disease_only` | ❌ None | ✅ PlantVillage classifier |
+
+The dashboard automatically switches view based on farm type — lychee farms show ripeness charts and harvest prediction, disease farms show health status and disease breakdown.
 
 ---
 
@@ -66,16 +82,19 @@ fruitwatch/
 │   │   ├── services/     # Harvest predictor, weather
 │   │   └── db/           # SQLAlchemy models
 │   └── models/
-│       ├── fruit_detections/       # Lychee YOLOv8 model
-│       └── fruit_detections_360/   # Multi-fruit YOLOv8 model
+│       ├── fruit_detections/     # Lychee YOLOv8 model
+│       ├── plant_disease/        # PlantVillage classifier
+│       │   ├── inference.py
+│       │   ├── train.py
+│       │   └── prepare_data.py
+│       └── multi_inference.py    # Runs both models, returns combined result
 ├── frontend/             # React dashboard
 │   └── src/
 │       ├── components/
-│       │   ├── dashboard/  # Main dashboard, charts, prediction
+│       │   ├── dashboard/  # Main dashboard, charts, scan gallery
 │       │   ├── map/        # Leaflet map + harvest route planner
 │       │   └── shared/     # Theme, styled components
 │       └── locales/        # EN/ZH translations
-├── website/              # Marketing site
 ├── drone/                # Edge inference scripts
 ├── data/                 # Training data structure
 └── script/               # Utility scripts
@@ -95,6 +114,11 @@ pip install -r requirements.txt
 
 # Add your OpenWeatherMap API key
 cp .env.example .env
+
+# Run database migrations
+python add_farm_type.py
+python add_plant_disease_columns.py
+python add_disease_toggle.py
 
 # Start the server
 uvicorn app.main:app --reload
@@ -131,12 +155,15 @@ ALGORITHM=HS256
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/auth/login` | JWT login |
-| POST | `/detections/process_drone_data` | Upload image + GPS → run inference |
-| GET | `/detections/farm/{farm_id}` | Get all detections for a farm |
+| POST | `/detections/process_drone_data` | Upload image → runs both models automatically |
+| GET | `/detections/farm/{farm_id}` | All detections for a farm including image paths |
 | GET | `/summary` | Farm summary with weather + harvest prediction |
-| GET | `/farms` | List farms for authenticated user |
+| GET | `/farms/` | List farms with farm_type for authenticated user |
+| POST | `/farms/` | Create farm with farm_type and disease toggle |
+| GET | `/uploads/{path}` | Serve original and annotated images |
 
 ---
+
 ## Edge Inference (Raspberry Pi 5)
 
 The platform supports standalone edge inference on a Raspberry Pi 5 with Camera Module 3.
@@ -154,7 +181,24 @@ pip install ultralytics opencv-python-headless picamera2 --extra-index-url https
 python drone/inference_edge.py
 ```
 
-Controls: `L` = lychee model · `M` = multi-fruit model · `Q` = quit
+Controls: `L` = lychee model · `Q` = quit
+
+---
+
+## Training the Plant Disease Model
+
+```bash
+cd backend/models/plant_disease
+
+# Prepare dataset (merges per-plant folders into flat YOLOv8 classification structure)
+python prepare_data.py
+
+# Train
+python train.py --epochs 50 --model n
+```
+
+Uses `yolov8n-cls.pt`, `imgsz=224`, CPU with `workers=0` for macOS stability. Achieved 99.8% top-1 accuracy on the PlantVillage validation set.
+
 ---
 
 ## Honest Limitations
@@ -165,15 +209,24 @@ This is a portfolio project, not production software.
 
 **Ripeness detection** on the lychee model uses color-based HSV thresholding — it's fragile in outdoor lighting conditions. A production system would train a separate ripeness classifier.
 
+**Plant disease detection** is a leaf-level classifier trained on studio images. In the field, a drone would need close-up leaf photography for accurate results. Wide-angle tree shots would require a detection model with bounding boxes around individual leaves.
+
 **Harvest prediction** is a linear formula based on ripe percentage, not a real ML model. It doesn't account for fruit variety growth curves or multi-season historical data.
 
 These are known trade-offs made to ship a complete, working system within scope.
 
 ---
 
+## What's Next
+
+- Soil moisture and temperature sensors wiring into the same dashboard (hardware arriving soon)
+- Per-tree grouping on the map
+
+---
+
 ## What I Learned
 
-I learned more building this than I would have building the robotic arm. Integrating a custom-trained computer vision model into a production-style API, building a full-stack application with real data flow, and designing a UI that actually communicates complex farm data clearly — that took real problem-solving at every layer.
+I learned more building this than I would have building the robotic arm. Integrating custom-trained computer vision models into a production-style API, building a full-stack application with real data flow, designing a UI that communicates complex farm data clearly, and running inference on edge hardware — that took real problem-solving at every layer.
 
 The soft robotics idea isn't dead. It's just next.
 
