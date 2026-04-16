@@ -95,6 +95,19 @@ class Detection(Base):
     individual_detections = relationship("IndividualDetection", backref="detection")
 
 
+# ---------- SENSOR READING ----------
+class SensorReading(Base):
+    __tablename__ = "sensor_readings"
+
+    id          = Column(Integer,  primary_key=True, index=True)
+    farm_id     = Column(Integer,  ForeignKey("farms.id"), nullable=False)
+    temperature = Column(Float,    nullable=True)   # °C
+    humidity    = Column(Float,    nullable=True)   # %
+    timestamp   = Column(DateTime, default=datetime.utcnow)
+
+    farm = relationship("Farm")
+
+
 class HealthMetric(Base):
     __tablename__ = "health_metrics"
 

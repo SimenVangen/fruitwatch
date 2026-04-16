@@ -16,6 +16,7 @@ import StatsBanner from "./statsbanner";
 import HarvestRoutePlanner from "../map/HarvestRoutePlanner";
 import HarvestTimeline from "./HarvestTimeline";
 import PredictionEngine from "./PredictionEngine";
+import SensorWidget from "./SensorWidget";
 
 const fadeIn  = keyframes`from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}`;
 const pulse   = keyframes`0%{opacity:1}50%{opacity:0.4}100%{opacity:1}`;
@@ -89,8 +90,6 @@ const Shimmer  = styled.div`
   background-size:200% 100%;animation:${pulse} 2s infinite;
   border-radius:8px;height:20px;margin-bottom:1rem;&:last-child{margin-bottom:0;}
 `;
-
-// Farm type badge shown next to farm name
 const FarmTypeBadge = styled.div`
   display:inline-flex;align-items:center;gap:0.35rem;
   padding:0.2rem 0.6rem;border-radius:20px;font-size:0.72rem;font-weight:600;
@@ -98,7 +97,6 @@ const FarmTypeBadge = styled.div`
   color:${p=>p.isDisease?"#92400E":"#065F46"};
   border:1px solid ${p=>p.isDisease?"#FDE68A":"#A7F3D0"};
 `;
-
 const WelcomeStrip = styled.div`
   background:white;border-radius:14px;padding:1.25rem 1.5rem;
   box-shadow:0 4px 16px rgba(0,0,0,0.06);
@@ -111,19 +109,18 @@ const StatPill = styled.div`
 `;
 
 export default function DashboardLayout({ activeTab, selectedFarm, farms, setSelectedFarm, loading }) {
-  const [detections,          setDetections]          = useState([]);
-  const [showUserMenu,        setShowUserMenu]         = useState(false);
-  const [summaryData,         setSummaryData]          = useState([]);
-  const [harvestPrediction,   setHarvestPrediction]    = useState(null);
-  const [predictionLoading,   setPredictionLoading]    = useState(false);
-  const [showLang,            setShowLang]             = useState(false);
-  const [search,              setSearch]               = useState("");
+  const [detections,        setDetections]        = useState([]);
+  const [showUserMenu,      setShowUserMenu]       = useState(false);
+  const [summaryData,       setSummaryData]        = useState([]);
+  const [harvestPrediction, setHarvestPrediction]  = useState(null);
+  const [predictionLoading, setPredictionLoading]  = useState(false);
+  const [showLang,          setShowLang]           = useState(false);
+  const [search,            setSearch]             = useState("");
 
   const summaryFetched = useRef(false);
   const token  = localStorage.getItem("token");
   const farmId = selectedFarm?.id ?? null;
 
-  // ── Derive view mode automatically from farm type ─────────
   const farmType      = selectedFarm?.farm_type || "lychee";
   const isDiseaseFarm = farmType === "plant_disease_only";
 
@@ -132,7 +129,6 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
 
   const filteredFarms = farms.filter(f => f.name.toLowerCase().includes(search.toLowerCase()));
 
-  // ── Data fetching ──────────────────────────────────────────
   useEffect(() => {
     if (summaryFetched.current) return;
     summaryFetched.current = true;
@@ -143,7 +139,7 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
 
   useEffect(() => {
     if (!farmId) { setHarvestPrediction(null); return; }
-    if (isDiseaseFarm) return; // no harvest prediction for disease farms
+    if (isDiseaseFarm) return;
     setPredictionLoading(true);
     const tid = setTimeout(() => {
       api.get(`/detections/${farmId}/harvest-timeline`, {
@@ -171,7 +167,6 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
   const handleLogout = () => { localStorage.removeItem("token"); window.location.reload(); };
   const handleLang   = (l) => { setLanguage(l); setShowLang(false); };
 
-  // ── Welcome strip stats ────────────────────────────────────
   const totalRipe     = detections.reduce((s,d) => s + (d.ripe   || 0), 0);
   const totalUnripe   = detections.reduce((s,d) => s + (d.unripe || 0), 0);
   const healthyCount  = detections.filter(d => d.is_healthy === "True"  || d.is_healthy === true).length;
@@ -293,7 +288,10 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
                   </div>
                 </WelcomeStrip>
 
-                {/* 2 — Harvest prediction (lychee only) */}
+                {/* 2 — Sensor widget */}
+                <SensorWidget farmId={farmId} />
+
+                {/* 3 — Harvest prediction (lychee only) */}
                 {!isDiseaseFarm && (
                   predictionLoading ? (
                     <Skeleton>
@@ -308,7 +306,7 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
                   )
                 )}
 
-                {/* 3 — Map + Summary */}
+                {/* 4 — Map + Summary */}
                 <Grid>
                   <MapWrap>
                     <Title>🗺️ {selectedFarm.name}</Title>
@@ -318,6 +316,7 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
                       setSelectedFarm={setSelectedFarm}
                       loading={loading}
                       detections={detections}
+                      farmType={farmType}
                     />
                   </MapWrap>
                   <SumWrap>
@@ -330,7 +329,7 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
                   </SumWrap>
                 </Grid>
 
-                {/* 4 — Detection history (lychee only) */}
+                {/* 5 — Detection history (lychee only) */}
                 {!isDiseaseFarm && detections.length > 0 && (
                   <Card2>
                     <Title>📈 Detection History</Title>
@@ -338,7 +337,7 @@ export default function DashboardLayout({ activeTab, selectedFarm, farms, setSel
                   </Card2>
                 )}
 
-                {/* 5 — Weather (always) */}
+                {/* 6 — Weather (always) */}
                 {summaryData.length > 0 && (
                   <Card2>
                     <Title>{t("dashboard.fiveDayForecast")}</Title>
